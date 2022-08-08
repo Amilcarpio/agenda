@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+    <title>Agenda</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <v-app >
+        <!-- ABRIR CAIXA DE DIÁLOGO -->
+        <v-main class="ma-10 green rounded pa-6" >
+          <v-row class="d-flex justify-space-around ">
+            <h1 class="white--text">Meus Contatos</h1>   
+
+            <v-dialog v-model="dialog" persistent max-width="600px">
+              <template v-slot:activator="{ on, attrs }">
+                <v-icon larger color="white"  dark v-bind="attrs" v-on="on" class="pa-2" >
+                  mdi-account-plus
+                </v-icon>
+              </template>
+
+              <v-card>
+                <v-card-title>
+                    <span class="text-h5">Adicionar Novo Contato</span>
+                </v-card-title>
+
+                <!-- CONTEÚDO CAIXA DE DIÁLOGO -->
+                <v-container>
+                    <v-card-text>
+                        <!-- INPUTS -->
+                        <v-text-field  
+                        id="nomeInput"
+                        :rules="rules"
+                        v-model="nome" 
+                        label="Nome" 
+                        required>
+                        </v-text-field>
+                        
+                        <v-text-field
+                          id="phone"
+                          onkeypress="mask(this, mphone)"
+                          onblur="mask(this, mphone)"
+                          v-model="numero"
+                          maxlength="15"
+                          label="Número com DDD"
+                          :rules="rulesNum"
+                          required
+                        >
+                        </v-text-field>
+                        
+                        <!-- BOTÕES DE AÇÃO -->
+                        <v-btn 
+                        class="ma-2 saveBtn" 
+                        color="success" 
+                        @click="saveContato"
+                        >
+                          Salvar
+                        </v-btn>
+                        <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="dialog = false"
+                         >
+                        Close
+                        </v-btn>
+                  </v-container>
+                </v-card-text>
+              </v-card>
+            </v-dialog>
+          </v-row>
+
+          <!-- CORPO DO TABLE -->
+          <v-container>
+          <v-simple-table fixed-header height="400px" class="rounded pa-3">
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">Nome</th>
+                  <th class="text-left">Número</th>
+                </tr>
+              </thead>
+
+              <!-- CONTEÚDO DO TABLE -->
+              <tbody>
+                <tr v-for="item in contatos" :key="item.id" :class="{ddd11: item.ddd}">
+                  <td>{{ item.nome }}</td>
+                  
+                  <!-- BOTÕES DE AÇÃO DO TABLE-->
+                  <td>
+                    {{ item.numero }}
+                    <v-icon
+                      medium
+                      color="red"
+                      @click="deleteEdit(item.id)"
+                      class="pa-2"
+                    >
+                    mdi-delete-outline
+                    </v-icon>
+                    
+                    <!-- CAIXA DE DIÁLOGO DE EDIÇÃO -->
+                    <v-dialog v-model="dialogEdit" persistent max-width="600px">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-icon class="pa-2" color="green" medium dark v-bind="attrs" v-on="on">
+                          mdi-pencil-outline
+                        </v-icon>
+                      </template>
+                      <v-card>
+                        <v-card-title>
+                            <span class="text-h5">Editar Contato</span>
+                        </v-card-title>
+                        <!-- CONTEÚDO CAIXA DE DIÁLOGO DE EDIÇÃO -->
+                        <v-container>
+                            <v-card-text>
+                                <!-- INPUTS -->
+                                <v-text-field  
+                                id="nomeInput" 
+                                v-model="nomeEdit" 
+                                label="Nome"
+                                :rules="rules"
+                                required>
+                                </v-text-field>
+                                
+                                <v-text-field
+                                  id="phone"
+                                  onkeypress="mask(this, mphone)"
+                                  onblur="mask(this, mphone)"
+                                  v-model="numeroEdit"
+                                  maxlength="15"
+                                  label="Número com DDD"
+                                  required
+                                  :rules="rulesNum"
+                                >
+                                </v-text-field>
+                                <!-- BOTÕES DE AÇÃO -->
+                                <v-btn 
+                                class="ma-2 saveBtn" 
+                                color="success" 
+                                @click="saveEdit(item.id)"
+                                >
+                                  Salvar
+                                </v-btn>
+                                <v-btn
+                                color="blue darken-1"
+                                text
+                                @click="dialogEdit = false"
+                                 >
+                                Close
+                                </v-btn>
+                            </v-card-text>
+                            </v-container>
+                        </v-card-text>
+                      </v-card>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-main>
+      </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+    <script>
+      new Vue({
+        el: '#app',
+        vuetify: new Vuetify(),
+        data(){
+          return {
+            dialog: false,
+            dialogEdit: false,
+            nome: null,
+            numero: null,
+            nomeEdit: null,
+            numeroEdit: null,
+            rules:[
+              value => !!value || 'Nome é obrigatório.',
+              value => (value && value.split(' ').length > 1) || 'Nome deve ter duas palavras.',
+              value => (value && value.split(' ').every(word => word.length > 2)) || 'Nome deve ter no mínimo duas palavras com 3 caracteres cada.',             
+            ],
+            rulesNum:[
+              value => !!value || 'Número é obrigatório.',
+              value => (value && value.length == 15) || 'Número deve ter 15 dígitos.',
+            ],
+            contatos: [{
+              id: 1,
+              nome: 'João',
+              numero: '(12) 99999-9999',
+              ddd: false
+            },
+            {
+              id: 2,
+              nome: 'Maria',
+              numero: '(11) 98888-8888',
+              ddd: true
+            },
+            {
+              id: 3,
+              nome: 'José',
+              numero: '(11) 97777-7777',
+              ddd: true
+            }],
+          }
+        },
+
+        methods: {
+          saveContato(){
+              this.contatos.push({
+                id: this.contatos.length + 1,
+                nome: this.nome,
+                numero: this.numero,
+                //verificando se o ddd é 11 e setando true ou false
+                ddd: this.numero.substring(1,3) == '11' ? true : false,
+              });
+              this.nome = '';
+              this.numero = '';
+              this.dialog = false;            
+          },
+
+          deleteEdit(id){
+            this.contatos = this.contatos.filter(item => item.id !== id);
+          },
+
+          saveEdit(id){
+            this.contatos = this.contatos.map(item => {
+              if(item.id === id){
+                item.nome = this.nomeEdit;
+                item.numero = this.numeroEdit;
+                item.ddd = this.numeroEdit.substring(1,3) == '11' ? true : false;
+              }
+              return item;
+            });
+            this.nomeEdit = '';
+            this.numeroEdit = '';
+            this.dialogEdit = false;
+          },
+
+        },
+
+      })
+
+      // FUNÇÃO PARA MASCARA DE TEL.
+      function mask(o, f) {
+        setTimeout(function() {
+          var v = mphone(o.value);
+          if (v != o.value) {
+            o.value = v;
+          }
+        }, 1);
+      }
+
+      function mphone(v) {
+        var r = v.replace(/\D/g, "");
+        r = r.replace(/^0/, "");
+        if (r.length > 10) {
+          r = r.replace(/^(\d\d)(\d{5})(\d{4}).*/, "($1) $2-$3");
+        } else if (r.length > 5) {
+          r = r.replace(/^(\d\d)(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+        } else if (r.length > 2) {
+          r = r.replace(/(\d)(\d{4})$/,"$1-$2");
+        } else {
+          r = r.replace(/^(\d*)/, "($1");
+        }
+        return r;
+      }
+      
+      
+    </script>
+  </body>
+</html>
+
+<style>
+.v-app {
+  width: 50%;
+  
+}
+
+#app{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: green;
+}
+
+.ddd11{
+  color: blue
+}
+</style>
